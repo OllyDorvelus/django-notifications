@@ -1,5 +1,3 @@
-from distutils.version import StrictVersion
-
 from django import get_version
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -8,9 +6,10 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 
+from .utils import slug2id
 from .models import Notification
-from .utils import id2slug, slug2id
 
+from distutils.version import StrictVersion
 if StrictVersion(get_version()) >= StrictVersion('1.7.0'):
     from django.http import JsonResponse
 else:
@@ -148,17 +147,14 @@ def live_unread_notification_list(request):
 
     unread_list = []
 
-    for n in request.user.notifications.unread()[0:num_to_fetch]:
+    for n in request.user.notifications.all()[0:num_to_fetch]:#changed notifications.unread to notification.all() to make like Facebook
         struct = model_to_dict(n)
-        struct['slug'] = id2slug(n.id)
         if n.actor:
             struct['actor'] = str(n.actor)
         if n.target:
             struct['target'] = str(n.target)
         if n.action_object:
             struct['action_object'] = str(n.action_object)
-        if n.data:
-            struct['data'] = n.data
         unread_list.append(struct)
         if request.GET.get('mark_as_read'):
             n.mark_as_read()
